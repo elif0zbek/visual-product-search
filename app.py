@@ -1,3 +1,6 @@
+import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 from flask import Flask, request, jsonify, render_template
 import clip
 import torch
@@ -5,7 +8,6 @@ import faiss
 import pickle
 from PIL import Image
 import io
-import os
 import numpy as np
 
 # İSTEK 3 İÇİN EKLENDİ
@@ -31,8 +33,8 @@ with open(payload_path, 'rb') as f:
 print(f"Sunucu hazır. {index_clip.ntotal} ürün veritabanında.")
 
 
-# --- 2. Arama Fonksiyonu (GÜNCELLENDİ) ---
-# search_hybrid fonksiyonu sadeleştirildi, artık sadece resim arıyor (İstek 2)
+# --- 2. Arama Fonksiyonu ---
+# Sadece görsel arama yapan sadeleştirilmiş fonksiyon
 def search_image(image_data, k=5):
     """
     Sadece görsel sorgu kullanarak arama yapar.
@@ -89,10 +91,7 @@ def search():
     image_file = request.files['image']
     image_data = image_file.read()
 
-    # GÜNCELLENDİ: Metin sorgusu alma kısmı kaldırıldı (İstek 2)
-    # text_query = request.form.get('text') 
-
-    # GÜNCELLENDİ: search_image çağırılıyor (İstek 2)
+    # search_image çağırılıyor
     results = search_image(image_data, k=5)
 
     if results is not None:
@@ -100,8 +99,7 @@ def search():
     else:
         return jsonify({"error": "Arama sırasında hata"}), 500
 
-# --- 4. Sunucuyu Başlatma (GÜNCELLENDİ) ---
-# İSTEK 3 İÇİN GÜNCELLENDİ
+# --- 4. Sunucuyu Başlatma ---
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     
