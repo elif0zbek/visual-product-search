@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Veri ve Model Dosyaları
+*.pkl
+*.faiss
+*.csv

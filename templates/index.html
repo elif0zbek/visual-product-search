@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görsel Ayakkabı Arama</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        h1 { color: #333; }
+        form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input[type="file"] {
+            width: 95%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        #results { margin-top: 20px; }
+        .result-item {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .result-item img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin-right: 15px;
+            border-radius: 4px;
+        }
+        /* İSTEK 1 İÇİN EKLENDİ (Yüklenen resmi gösterme stili) */
+        #uploaded-image-preview {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #007BFF;
+        }
+    </style>
+</head>
+<body>
+    <h1>Görsel Ayakkabı Arama Motoru</h1>
+    
+    <form id="search-form" enctype="multipart/form-data">
+        <h3>Benzerini Bulmak İstediğiniz Resmi Yükleyin</h3>
+        <input type="file" name="image" id="image-file" accept="image/*" required>
+        
+        <button type="submit">Ara</button>
+    </form>
+
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('search-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Sayfanın yenilenmesini engelle
+
+            const form = event.target;
+            const resultsDiv = document.getElementById('results');
+            const imageFile = document.getElementById('image-file').files[0];
+
+            if (!imageFile) {
+                resultsDiv.innerHTML = '<p style="color: red;">Lütfen bir resim dosyası seçin.</p>';
+                return;
+            }
+
+            // İSTEK 1 İÇİN GÜNCELLENDİ (Yüklenen resmi gösterme)
+            const reader = new FileReader();
+            
+            // Resim dosyası okunduğunda bu çalışacak
+            reader.onload = async function(e) {
+                const uploadedImgHTML = `
+                    <h2>Yüklenen Resim</h2>
+                    <img src="${e.target.result}" id="uploaded-image-preview" alt="Yüklenen Resim">
+                `;
+                resultsDiv.innerHTML = uploadedImgHTML + "<h2>Aranıyor... Lütfen bekleyin.</h2>";
+
+                // Resim yüklendikten sonra sunucuya isteği gönder
+                const formData = new FormData(form);
+                
+                try {
+                    const response = await fetch('/search', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Sunucu hatası: ' + response.statusText);
+                    }
+
+                    const results = await response.json(); 
+                    
+                    // Arama sonuçlarını "Yüklenen Resim"in altına ekle
+                    resultsDiv.innerHTML = uploadedImgHTML + "<h2>Arama Sonuçları</h2>"; // "Aranıyor" yazısını temizle
+                    
+                    if (results.length === 0) {
+                        resultsDiv.innerHTML += "<p>Sonuç bulunamadı.</p>";
+                    }
+
+                    results.forEach(item => {
+                        resultsDiv.innerHTML += `
+                            <div class="result-item">
+                                <img src="${item.image_url}" alt="${item.product_name}">
+                                <div>
+                                    <h3>Benzerlik Skoru: ${item.score.toFixed(3)}</h3>
+                                    <p><b>İsim:</b> ${item.product_name}</p>
+                                    <p><b>Link:</b> <a href="${item.site_url}" target="_blank">Ürün Sayfasına Git</a></p>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                } catch (error) {
+                    console.error('Arama hatası:', error);
+                    resultsDiv.innerHTML = `<p style="color: red;"><strong>Hata oluştu:</strong> ${error.message}</p>`;
+                }
+            };
+
+            // FileReader'ı başlat
+            reader.readAsDataURL(imageFile);
+        });
+    </script>
+</body>
+</html>

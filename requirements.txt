@@ -1,0 +1,11 @@
+flask
+clip-openai
+torch
+faiss-cpu
+numpy
+Pillow
+requests
+pandas
+# Scraping için (gerekliyse):
+# selenium
+# beautifulsoup4
